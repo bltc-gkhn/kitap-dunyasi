@@ -57,7 +57,6 @@
             flex-wrap: wrap;
         }
 
-        /* ARAMA BÖLÜMÜ STİLLERİ */
         .search-container {
             max-width: 1200px;
             margin: 0 auto 25px auto;
@@ -116,20 +115,20 @@
         .add-book-btn {
             background-color: var(--accent-color);
             color: #000;
-            display: none; /* Yalnızca admin görsün */
+            display: none;
         }
 
         .suggest-book-btn {
             background-color: var(--info-color);
             color: #fff;
-            display: inline-block; /* Normal kullanıcılar için */
+            display: inline-block;
         }
 
         .pending-requests-btn {
             background-color: #333;
             color: var(--accent-color);
             border: 1px solid var(--accent-color);
-            display: none; /* Yalnızca admin görsün */
+            display: none;
             position: relative;
         }
 
@@ -197,7 +196,7 @@
             position: absolute;
             top: 10px;
             right: 10px;
-            display: none; /* Yalnızca admin görsün */
+            display: none;
             gap: 5px;
             z-index: 10;
         }
@@ -421,7 +420,6 @@
             font-weight: bold;
         }
 
-        /* ADMIN YETKİSİ AKTİF OLDUĞUNDA GÖRÜNECEK ALANLAR */
         body.is-admin .add-book-btn, 
         body.is-admin .pending-requests-btn { display: inline-block; }
         body.is-admin .suggest-book-btn { display: none; }
@@ -450,20 +448,17 @@
         </div>
     </header>
 
-    <!-- ARAMA ÇUBUĞU -->
     <div class="search-container">
         <span class="search-icon">🔍</span>
         <input type="text" id="searchInput" class="search-input" placeholder="Kitap veya yazar adı ile arayın..." oninput="handleSearch()">
     </div>
 
-    <!-- KİTAP BULTUNAMADI UYARISI -->
     <div class="no-results" id="noResults">
         Aradığınız kriterlere uygun kitap bulunamadı.
     </div>
 
     <main class="book-grid" id="bookGrid"></main>
 
-    <!-- KİTAP DETAY PENCERESİ -->
     <div class="modal" id="bookModal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('bookModal')">&times;</span>
@@ -486,7 +481,6 @@
         </div>
     </div>
 
-    <!-- KİTAP EKLE / ÖNER / DÜZENLE FORM PENCERESİ -->
     <div class="modal" id="addBookModal">
         <div class="modal-content" style="max-width: 500px;">
             <span class="close-btn" onclick="closeModal('addBookModal')">&times;</span>
@@ -524,7 +518,6 @@
         </div>
     </div>
 
-    <!-- YÖNETİCİ ONAY PENCERESİ (BEKLEYEN ÖNERİLER) -->
     <div class="modal" id="pendingModal">
         <div class="modal-content" style="max-width: 600px;">
             <span class="close-btn" onclick="closeModal('pendingModal')">&times;</span>
@@ -536,18 +529,96 @@
     <script>
         const ADMIN_PASSWORD = "1234";
 
-        const books = [
+        const defaultBooks = [
             {
                 title: "Şeker Portakalı",
                 author: "José Mauro de Vasconcelos",
                 date: "1968",
                 cover: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400",
-                summary: "Brezilya'nın Rio de Janeiro kentinde yaşayan Zezé adındaki küçük bir çocuğun başından geçen duygusal hikayeyi anlatır.",
-                authorBio: "Brezilyalı yazar José Mauro de Vasconcelos (1920-1984), kendi deneyimlerinden yola çıkarak yazdığı eserleriyle bilinir."
+                summary: "Brezilya'nın Rio de Janeiro kentinde yaşayan Zezé adındaki küçük, yaramaz ama duygusal bir çocuğun iç dünyasını ve çevresiyle olan ilişkisini anlatır.",
+                authorBio: "José Mauro de Vasconcelos (1920-1984), Brezilyalı yazar. Kendi yaşam deneyimlerini yalın bir dille aktardığı eserleriyle tanınır."
+            },
+            {
+                title: "Simyacı",
+                author: "Paulo Coelho",
+                date: "1988",
+                cover: "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=400",
+                summary: "Endülüs'ten başlayıp Mısır Piramitleri'ne uzanan bir yolculuğa çıkan Çoban Santiago'nun kendi 'Kişisel Menkıbe'sini arama serüvenini konu alır.",
+                authorBio: "Paulo Coelho, Brezilyalı roman ve söz yazarıdır. Eserleri onlarca dile çevrilmiş ve dünya çapında milyonlarca satmıştır."
+            },
+            {
+                title: "Kürk Mantolu Madonna",
+                author: "Sabahattin Ali",
+                date: "1943",
+                cover: "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400",
+                summary: "Berlin'e giden tutuk karakterli Raif Efendi'nin, orada tanıştığı Maria Puder ile yaşadığı unutulmaz ve hüzünlü aşk hikayesini anlatır.",
+                authorBio: "Sabahattin Ali (1907-1948), Türk edebiyatının en önemli toplumcu gerçekçi yazar, şair ve öğretmenlerindendir."
+            },
+            {
+                title: "1984",
+                author: "George Orwell",
+                date: "1949",
+                cover: "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=400",
+                summary: "Büyük Birader'in mutlak gözetimi altındaki distopik bir dünyada, hakikati arayan Winston Smith'in sisteme başkaldırma çabasını konu edinir.",
+                authorBio: "George Orwell (1903-1950), İngiliz roman yazarı, gazeteci ve eleştirmen. Siyasi hiciv ve distopya türündeki eserleriyle meşhurdur."
+            },
+            {
+                title: "Küçük Prens",
+                author: "Antoine de Saint-Exupéry",
+                date: "1943",
+                cover: "https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=400",
+                summary: "Sahra Çölü'ne düşen bir pilotun, başka bir gezegenden gelen Küçük Prens ile tanışmasını ve onun gözünden insan ilişkilerini sorgulamasını anlatır.",
+                authorBio: "Antoine de Saint-Exupéry (1900-1944), Fransız pilot ve yazar. Eserlerinde insan sevgisi ve hayatın anlamı temalarını işler."
+            },
+            {
+                title: "Suç ve Ceza",
+                author: "Fyodor Dostoyevski",
+                date: "1866",
+                cover: "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=400",
+                summary: "Yoksul bir öğrenci olan Raskolnikov'un, toplum yararı için işlediğini düşündüğü cinayet sonrası yaşadığı derin vicdan azabı ve psikolojik çöküşü işler.",
+                authorBio: "Fyodor Dostoyevski (1821-1881), Rus edebiyatının ve dünya romanının en büyük psikolojik tahlil ustalarındandır."
+            },
+            {
+                title: "Tutunamayanlar",
+                author: "Oğuz Atay",
+                date: "1971",
+                cover: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=400",
+                summary: "Turgut Özben'in, intihar eden arkadaşı Selim Işık'ın geçmişinin izini sürerken modern toplumdaki yalnızlığını ve bireyin iç çatışmalarını keşfetmesini anlatır.",
+                authorBio: "Oğuz Atay (1934-1977), Türk edebiyatında postmodern tarzda eser veren ilk ve en önemli yazarlardan biridir."
+            },
+            {
+                title: "Dönüşüm",
+                author: "Franz Kafka",
+                date: "1915",
+                cover: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400",
+                summary: "Gregor Samsa'nın bir sabah dev bir böceğe dönüşmesiyle başlayan ve ailesi ile toplum tarafından dışlanmasını konu alan sarsıcı bir uzun öyküdür.",
+                authorBio: "Franz Kafka (1883-1924), 20. yüzyılın en etkili Prag doğumlu modernist yazarlarındandır."
+            },
+            {
+                title: "Bülbülü Öldürmek",
+                author: "Harper Lee",
+                date: "1960",
+                cover: "https://images.unsplash.com/photo-1476275466078-4007374efbbe?w=400",
+                summary: "ABD'nin güneyinde ırkçılığın hüküm sürdüğü bir kasabada, haksız yere suçlanan siyah bir adamı savunan avukat Atticus Finch ve kızı Scout'un gözünden adalet kavramını anlatır.",
+                authorBio: "Harper Lee (1926-2016), Pulitzer ödüllü Amerikalı yazar."
+            },
+            {
+                title: "Fahrenheit 451",
+                author: "Ray Bradbury",
+                date: "1953",
+                cover: "https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?w=400",
+                summary: "Kitapların yasaklandığı ve itfaiyecilerin yangın söndürmek yerine kitap yaktığı gelecekteki bir dünyada, itfaiyeci Guy Montag'ın uyanışını konu alır.",
+                authorBio: "Ray Bradbury (1920-2012), bilimkurgu ve fantezi türünde unutulmaz eserler vermiş Amerikalı yazar."
             }
         ];
 
-        const pendingBooks = [];
+        let books = JSON.parse(localStorage.getItem('my_books')) || defaultBooks;
+        let pendingBooks = JSON.parse(localStorage.getItem('my_pending_books')) || [];
+
+        function saveToStorage() {
+            localStorage.setItem('my_books', JSON.stringify(books));
+            localStorage.setItem('my_pending_books', JSON.stringify(pendingBooks));
+        }
 
         function loginAdmin() {
             const password = prompt("Lütfen Yönetici Şifresini Giriniz:");
@@ -564,7 +635,6 @@
             alert("Yönetici oturumu kapatıldı.");
         }
 
-        // ARAMA VE FİLTRELEME FONKSİYONU
         function handleSearch() {
             const query = document.getElementById('searchInput').value.toLowerCase().trim();
             const filteredBooks = books.filter(book => 
@@ -586,7 +656,6 @@
             }
 
             filteredList.forEach((book) => {
-                // Orijinal dizideki indeksini bul
                 const originalIndex = books.indexOf(book);
                 const defaultImage = 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=400';
                 const coverUrl = book.cover && book.cover.trim() !== '' ? book.cover : defaultImage;
@@ -617,7 +686,8 @@
         function deleteBook(index) {
             if (confirm(`"${books[index].title}" kitabını silmek istediğinizden emin misiniz?`)) {
                 books.splice(index, 1);
-                handleSearch(); // Arama durumunu koruyarak yeniden çiz
+                saveToStorage();
+                handleSearch();
             }
         }
 
@@ -692,13 +762,13 @@
             if (isSuggestion) {
                 pendingBooks.unshift(bookData);
                 alert("Öneriniz yöneticilere iletildi! Teşekkür ederiz.");
-                updatePendingBadge();
             } else if (editIndex === -1) {
                 books.unshift(bookData);
             } else {
                 books[editIndex] = bookData;
             }
 
+            saveToStorage();
             handleSearch();
             closeModal('addBookModal');
         }
@@ -733,6 +803,7 @@
         function approveSuggestion(index) {
             const approvedBook = pendingBooks.splice(index, 1)[0];
             books.unshift(approvedBook);
+            saveToStorage();
             handleSearch();
             openPendingModal();
         }
@@ -740,6 +811,7 @@
         function rejectSuggestion(index) {
             if (confirm("Bu öneriyi reddetmek istediğinizden emin misiniz?")) {
                 pendingBooks.splice(index, 1);
+                saveToStorage();
                 updatePendingBadge();
                 openPendingModal();
             }
