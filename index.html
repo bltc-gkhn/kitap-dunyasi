@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kitap Dünyası</title>
+    <!-- Supabase JS Kütüphanesi -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-color: #121212;
@@ -487,7 +489,7 @@
             <h2 id="formHeader" style="color: var(--accent-color); margin-bottom: 20px;">Yeni Kitap Ekle</h2>
             
             <form id="addBookForm" onsubmit="handleBookSubmit(event)">
-                <input type="hidden" id="editIndex" value="-1">
+                <input type="hidden" id="editId" value="">
                 <input type="hidden" id="isSuggestion" value="false">
                 <div class="form-group">
                     <label>Kitap Adı *</label>
@@ -527,97 +529,40 @@
     </div>
 
     <script>
+        // Supabase Bağlantı Bilgileri
+        const SUPABASE_URL = "https://ljeznmysacjjutfefiyw.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_3D081FZUi7fncHB2B3pACg_hAVWs68c";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         const ADMIN_PASSWORD = "1234";
+        let books = [];
+        let pendingBooks = [];
 
-        const defaultBooks = [
-            {
-                title: "Şeker Portakalı",
-                author: "José Mauro de Vasconcelos",
-                date: "1968",
-                cover: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400",
-                summary: "Brezilya'nın Rio de Janeiro kentinde yaşayan Zezé adındaki küçük, yaramaz ama duygusal bir çocuğun iç dünyasını ve çevresiyle olan ilişkisini anlatır.",
-                authorBio: "José Mauro de Vasconcelos (1920-1984), Brezilyalı yazar. Kendi yaşam deneyimlerini yalın bir dille aktardığı eserleriyle tanınır."
-            },
-            {
-                title: "Simyacı",
-                author: "Paulo Coelho",
-                date: "1988",
-                cover: "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=400",
-                summary: "Endülüs'ten başlayıp Mısır Piramitleri'ne uzanan bir yolculuğa çıkan Çoban Santiago'nun kendi 'Kişisel Menkıbe'sini arama serüvenini konu alır.",
-                authorBio: "Paulo Coelho, Brezilyalı roman ve söz yazarıdır. Eserleri onlarca dile çevrilmiş ve dünya çapında milyonlarca satmıştır."
-            },
-            {
-                title: "Kürk Mantolu Madonna",
-                author: "Sabahattin Ali",
-                date: "1943",
-                cover: "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400",
-                summary: "Berlin'e giden tutuk karakterli Raif Efendi'nin, orada tanıştığı Maria Puder ile yaşadığı unutulmaz ve hüzünlü aşk hikayesini anlatır.",
-                authorBio: "Sabahattin Ali (1907-1948), Türk edebiyatının en önemli toplumcu gerçekçi yazar, şair ve öğretmenlerindendir."
-            },
-            {
-                title: "1984",
-                author: "George Orwell",
-                date: "1949",
-                cover: "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=400",
-                summary: "Büyük Birader'in mutlak gözetimi altındaki distopik bir dünyada, hakikati arayan Winston Smith'in sisteme başkaldırma çabasını konu edinir.",
-                authorBio: "George Orwell (1903-1950), İngiliz roman yazarı, gazeteci ve eleştirmen. Siyasi hiciv ve distopya türündeki eserleriyle meşhurdur."
-            },
-            {
-                title: "Küçük Prens",
-                author: "Antoine de Saint-Exupéry",
-                date: "1943",
-                cover: "https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=400",
-                summary: "Sahra Çölü'ne düşen bir pilotun, başka bir gezegenden gelen Küçük Prens ile tanışmasını ve onun gözünden insan ilişkilerini sorgulamasını anlatır.",
-                authorBio: "Antoine de Saint-Exupéry (1900-1944), Fransız pilot ve yazar. Eserlerinde insan sevgisi ve hayatın anlamı temalarını işler."
-            },
-            {
-                title: "Suç ve Ceza",
-                author: "Fyodor Dostoyevski",
-                date: "1866",
-                cover: "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=400",
-                summary: "Yoksul bir öğrenci olan Raskolnikov'un, toplum yararı için işlediğini düşündüğü cinayet sonrası yaşadığı derin vicdan azabı ve psikolojik çöküşü işler.",
-                authorBio: "Fyodor Dostoyevski (1821-1881), Rus edebiyatının ve dünya romanının en büyük psikolojik tahlil ustalarındandır."
-            },
-            {
-                title: "Tutunamayanlar",
-                author: "Oğuz Atay",
-                date: "1971",
-                cover: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=400",
-                summary: "Turgut Özben'in, intihar eden arkadaşı Selim Işık'ın geçmişinin izini sürerken modern toplumdaki yalnızlığını ve bireyin iç çatışmalarını keşfetmesini anlatır.",
-                authorBio: "Oğuz Atay (1934-1977), Türk edebiyatında postmodern tarzda eser veren ilk ve en önemli yazarlardan biridir."
-            },
-            {
-                title: "Dönüşüm",
-                author: "Franz Kafka",
-                date: "1915",
-                cover: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400",
-                summary: "Gregor Samsa'nın bir sabah dev bir böceğe dönüşmesiyle başlayan ve ailesi ile toplum tarafından dışlanmasını konu alan sarsıcı bir uzun öyküdür.",
-                authorBio: "Franz Kafka (1883-1924), 20. yüzyılın en etkili Prag doğumlu modernist yazarlarındandır."
-            },
-            {
-                title: "Bülbülü Öldürmek",
-                author: "Harper Lee",
-                date: "1960",
-                cover: "https://images.unsplash.com/photo-1476275466078-4007374efbbe?w=400",
-                summary: "ABD'nin güneyinde ırkçılığın hüküm sürdüğü bir kasabada, haksız yere suçlanan siyah bir adamı savunan avukat Atticus Finch ve kızı Scout'un gözünden adalet kavramını anlatır.",
-                authorBio: "Harper Lee (1926-2016), Pulitzer ödüllü Amerikalı yazar."
-            },
-            {
-                title: "Fahrenheit 451",
-                author: "Ray Bradbury",
-                date: "1953",
-                cover: "https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?w=400",
-                summary: "Kitapların yasaklandığı ve itfaiyecilerin yangın söndürmek yerine kitap yaktığı gelecekteki bir dünyada, itfaiyeci Guy Montag'ın uyanışını konu alır.",
-                authorBio: "Ray Bradbury (1920-2012), bilimkurgu ve fantezi türünde unutulmaz eserler vermiş Amerikalı yazar."
+        async function fetchBooks() {
+            // Sadece onaylanmış kitapları çek
+            const { data, error } = await supabase
+                .from('books')
+                .select('*')
+                .eq('is_approved', true)
+                .order('id', { ascending: false });
+
+            if (!error && data) {
+                books = data;
+                renderBooks();
             }
-        ];
+            fetchPendingCount();
+        }
 
-        let books = JSON.parse(localStorage.getItem('my_books')) || defaultBooks;
-        let pendingBooks = JSON.parse(localStorage.getItem('my_pending_books')) || [];
+        async function fetchPendingCount() {
+            const { data, error } = await supabase
+                .from('books')
+                .select('*')
+                .eq('is_approved', false);
 
-        function saveToStorage() {
-            localStorage.setItem('my_books', JSON.stringify(books));
-            localStorage.setItem('my_pending_books', JSON.stringify(pendingBooks));
+            if (!error && data) {
+                pendingBooks = data;
+                document.getElementById('pendingCount').innerText = pendingBooks.length;
+            }
         }
 
         function loginAdmin() {
@@ -656,18 +601,17 @@
             }
 
             filteredList.forEach((book) => {
-                const originalIndex = books.indexOf(book);
                 const defaultImage = 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=400';
                 const coverUrl = book.cover && book.cover.trim() !== '' ? book.cover : defaultImage;
 
                 grid.innerHTML += `
                     <div class="book-card">
                         <div class="book-card-actions">
-                            <button class="action-btn edit-btn" onclick="editBook(${originalIndex})" title="Düzenle">✎ Düzenle</button>
-                            <button class="action-btn delete-btn" onclick="deleteBook(${originalIndex})" title="Sil">✕ Sil</button>
+                            <button class="action-btn edit-btn" onclick="editBook(${book.id})" title="Düzenle">✎ Düzenle</button>
+                            <button class="action-btn delete-btn" onclick="deleteBook(${book.id}, '${book.title}')" title="Sil">✕ Sil</button>
                         </div>
-                        <img class="book-cover" src="${coverUrl}" alt="${book.title}" onerror="this.src='${defaultImage}'" onclick="openBookModal(${originalIndex})">
-                        <div class="book-info" onclick="openBookModal(${originalIndex})">
+                        <img class="book-cover" src="${coverUrl}" alt="${book.title}" onerror="this.src='${defaultImage}'" onclick="openBookModal(${book.id})">
+                        <div class="book-info" onclick="openBookModal(${book.id})">
                             <div class="book-title">${book.title}</div>
                             <div class="book-author">${book.author}</div>
                             <div class="book-date">Basım: ${book.date || 'Bilinmiyor'}</div>
@@ -675,25 +619,20 @@
                     </div>
                 `;
             });
-
-            updatePendingBadge();
         }
 
-        function updatePendingBadge() {
-            document.getElementById('pendingCount').innerText = pendingBooks.length;
-        }
-
-        function deleteBook(index) {
-            if (confirm(`"${books[index].title}" kitabını silmek istediğinizden emin misiniz?`)) {
-                books.splice(index, 1);
-                saveToStorage();
-                handleSearch();
+        async function deleteBook(id, title) {
+            if (confirm(`"${title}" kitabını silmek istediğinizden emin misiniz?`)) {
+                await supabase.from('books').delete().eq('id', id);
+                fetchBooks();
             }
         }
 
-        function editBook(index) {
-            const book = books[index];
-            document.getElementById('editIndex').value = index;
+        function editBook(id) {
+            const book = books.find(b => b.id === id);
+            if (!book) return;
+
+            document.getElementById('editId').value = book.id;
             document.getElementById('isSuggestion').value = "false";
             document.getElementById('inputTitle').value = book.title;
             document.getElementById('inputAuthor').value = book.author;
@@ -707,8 +646,9 @@
             openAddModal(false);
         }
 
-        function openBookModal(index) {
-            const book = books[index];
+        function openBookModal(id) {
+            const book = books.find(b => b.id === id);
+            if (!book) return;
             const defaultImage = 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=400';
             
             document.getElementById('modalImg').src = book.cover && book.cover.trim() !== '' ? book.cover : defaultImage;
@@ -727,7 +667,7 @@
             if (isSuggestion) {
                 document.getElementById('formHeader').innerText = "💡 Kitap Önerisinde Bulun";
                 document.getElementById('submitBtn').innerText = "Öneriyi Gönder";
-            } else if (document.getElementById('editIndex').value === "-1") {
+            } else if (!document.getElementById('editId').value) {
                 document.getElementById('formHeader').innerText = "Yeni Kitap Ekle";
                 document.getElementById('submitBtn').innerText = "Yayınla";
             }
@@ -739,15 +679,15 @@
             document.getElementById(modalId).classList.remove('active');
             if (modalId === 'addBookModal') {
                 document.getElementById('addBookForm').reset();
-                document.getElementById('editIndex').value = "-1";
+                document.getElementById('editId').value = "";
                 document.getElementById('isSuggestion').value = "false";
             }
         }
 
-        function handleBookSubmit(event) {
+        async function handleBookSubmit(event) {
             event.preventDefault();
 
-            const editIndex = parseInt(document.getElementById('editIndex').value);
+            const editId = document.getElementById('editId').value;
             const isSuggestion = document.getElementById('isSuggestion').value === "true";
 
             const bookData = {
@@ -756,31 +696,37 @@
                 date: document.getElementById('inputDate').value,
                 cover: document.getElementById('inputCover').value,
                 summary: document.getElementById('inputSummary').value,
-                authorBio: document.getElementById('inputAuthorBio').value
+                authorBio: document.getElementById('inputAuthorBio').value,
+                is_approved: isSuggestion ? false : true
             };
 
-            if (isSuggestion) {
-                pendingBooks.unshift(bookData);
-                alert("Öneriniz yöneticilere iletildi! Teşekkür ederiz.");
-            } else if (editIndex === -1) {
-                books.unshift(bookData);
+            if (editId) {
+                // Güncelleme
+                await supabase.from('books').update(bookData).eq('id', editId);
+                alert("Kitap güncellendi!");
             } else {
-                books[editIndex] = bookData;
+                // Yeni Kayıt
+                await supabase.from('books').insert([bookData]);
+                if (isSuggestion) {
+                    alert("Öneriniz yöneticilere iletildi! Teşekkür ederiz.");
+                } else {
+                    alert("Kitap başarıyla eklendi!");
+                }
             }
 
-            saveToStorage();
-            handleSearch();
             closeModal('addBookModal');
+            fetchBooks();
         }
 
-        function openPendingModal() {
+        async function openPendingModal() {
+            await fetchPendingCount();
             const list = document.getElementById('pendingList');
             list.innerHTML = '';
 
             if (pendingBooks.length === 0) {
                 list.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">Onay bekleyen kitap önerisi bulunmuyor.</p>';
             } else {
-                pendingBooks.forEach((item, index) => {
+                pendingBooks.forEach((item) => {
                     list.innerHTML += `
                         <div class="pending-item">
                             <div class="pending-info">
@@ -789,8 +735,8 @@
                                 <p style="margin-top:5px;">${item.summary.substring(0, 90)}...</p>
                             </div>
                             <div class="pending-actions">
-                                <button class="approve-btn" onclick="approveSuggestion(${index})">✓ Onayla</button>
-                                <button class="reject-btn" onclick="rejectSuggestion(${index})">✕ Reddet</button>
+                                <button class="approve-btn" onclick="approveSuggestion(${item.id})">✓ Onayla</button>
+                                <button class="reject-btn" onclick="rejectSuggestion(${item.id})">✕ Reddet</button>
                             </div>
                         </div>
                     `;
@@ -800,24 +746,23 @@
             document.getElementById('pendingModal').classList.add('active');
         }
 
-        function approveSuggestion(index) {
-            const approvedBook = pendingBooks.splice(index, 1)[0];
-            books.unshift(approvedBook);
-            saveToStorage();
-            handleSearch();
+        async function approveSuggestion(id) {
+            await supabase.from('books').update({ is_approved: true }).eq('id', id);
+            alert("Kitap onaylandı ve kütüphaneye eklendi!");
             openPendingModal();
+            fetchBooks();
         }
 
-        function rejectSuggestion(index) {
+        async function rejectSuggestion(id) {
             if (confirm("Bu öneriyi reddetmek istediğinizden emin misiniz?")) {
-                pendingBooks.splice(index, 1);
-                saveToStorage();
-                updatePendingBadge();
+                await supabase.from('books').delete().eq('id', id);
                 openPendingModal();
+                fetchBooks();
             }
         }
 
-        renderBooks();
+        // Uygulama Başladığında Kitapları Çek
+        fetchBooks();
     </script>
 </body>
 </html>
