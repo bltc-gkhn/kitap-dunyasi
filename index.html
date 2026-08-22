@@ -4,764 +4,264 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kitap Dünyası</title>
-    <!-- Supabase JS Kütüphanesi -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-color: #121212;
             --card-bg: #1e1e1e;
-            --card-hover: #2a2a2a;
-            --text-primary: #ffffff;
-            --text-secondary: #a0a0a0;
+            --text-color: #ffffff;
             --accent-color: #ff9800;
-            --danger-color: #f44336;
             --border-color: #333333;
-            --modal-bg: rgba(0, 0, 0, 0.85);
-            --success-color: #4caf50;
-            --info-color: #2196f3;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            padding: 20px;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-color); padding: 20px; }
+        
         header {
-            max-width: 1200px;
-            margin: 0 auto 20px auto;
+            max-width: 1000px;
+            margin: 0 auto 30px auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 20px;
             border-bottom: 1px solid var(--border-color);
-            flex-wrap: wrap;
-            gap: 15px;
+            padding-bottom: 20px;
         }
 
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--accent-color);
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .search-container {
-            max-width: 1200px;
-            margin: 0 auto 25px auto;
-            position: relative;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 12px 20px 12px 45px;
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 15px;
-            outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        .search-input:focus {
-            border-color: var(--accent-color);
-            box-shadow: 0 0 8px rgba(255, 152, 0, 0.3);
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-secondary);
-            font-size: 16px;
-            pointer-events: none;
-        }
-
-        .no-results {
-            max-width: 1200px;
-            margin: 40px auto;
-            text-align: center;
-            color: var(--text-secondary);
-            display: none;
-            font-size: 16px;
-        }
-
+        .logo { font-size: 24px; font-weight: bold; color: var(--accent-color); }
+        
         .btn {
-            padding: 10px 16px;
+            background-color: var(--accent-color);
+            color: #000;
+            padding: 10px 18px;
             border: none;
             border-radius: 6px;
             font-weight: bold;
             cursor: pointer;
-            transition: opacity 0.2s;
         }
 
-        .btn:hover {
-            opacity: 0.9;
-        }
-
-        .add-book-btn {
-            background-color: var(--accent-color);
-            color: #000;
-            display: none;
-        }
-
-        .suggest-book-btn {
-            background-color: var(--info-color);
-            color: #fff;
-            display: inline-block;
-        }
-
-        .pending-requests-btn {
-            background-color: #333;
-            color: var(--accent-color);
-            border: 1px solid var(--accent-color);
-            display: none;
-            position: relative;
-        }
-
-        .badge-count {
-            background-color: var(--danger-color);
-            color: white;
-            font-size: 11px;
-            padding: 2px 6px;
-            border-radius: 10px;
-            margin-left: 5px;
-        }
-
-        .admin-login-btn {
-            background-color: #333333;
-            color: #fff;
-            border: 1px solid var(--border-color);
-        }
-
-        .admin-badge {
-            background-color: rgba(76, 175, 80, 0.2);
-            color: var(--success-color);
-            border: 1px solid var(--success-color);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 13px;
-            display: none;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .logout-btn {
-            background: none;
-            border: none;
-            color: var(--danger-color);
-            cursor: pointer;
-            font-weight: bold;
-            margin-left: 5px;
-        }
-
+        .container { max-width: 1000px; margin: 0 auto; }
+        
         .book-grid {
-            max-width: 1200px;
-            margin: 0 auto;
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 25px;
+            gap: 20px;
         }
 
         .book-card {
             background-color: var(--card-bg);
-            border-radius: 10px;
-            overflow: hidden;
             border: 1px solid var(--border-color);
-            position: relative;
-            transition: transform 0.2s, background-color 0.2s;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .book-card:hover {
-            transform: translateY(-5px);
-            background-color: var(--card-hover);
-        }
-
-        .book-card-actions {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            display: none;
-            gap: 5px;
-            z-index: 10;
-        }
-
-        .action-btn {
-            background: rgba(0, 0, 0, 0.85);
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            padding: 5px 8px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .edit-btn:hover { background: var(--accent-color); color: #000; }
-        .delete-btn:hover { background: var(--danger-color); }
-
-        .book-cover {
-            width: 100%;
-            height: 320px;
-            object-fit: cover;
-            background-color: #2b2b2b;
-            cursor: pointer;
-        }
-
-        .book-info {
+            border-radius: 8px;
             padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 5px;
-            cursor: pointer;
+            gap: 10px;
         }
 
-        .book-title {
-            font-size: 16px;
-            font-weight: bold;
-        }
+        .book-cover { width: 100%; height: 260px; object-fit: cover; border-radius: 6px; }
+        .book-title { font-weight: bold; font-size: 16px; color: var(--accent-color); }
+        .book-author { font-size: 14px; color: #aaa; }
+        .book-price { font-size: 15px; font-weight: bold; }
 
-        .book-author {
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
-
-        .book-date {
+        .comments-section { margin-top: 10px; border-top: 1px dashed var(--border-color); padding-top: 10px; }
+        .comment-item { font-size: 12px; background: #2a2a2a; padding: 6px; border-radius: 4px; margin-bottom: 5px; }
+        
+        .add-comment-box { display: flex; gap: 5px; margin-top: 5px; }
+        .add-comment-box input {
+            flex: 1;
+            padding: 6px;
+            background: #121212;
+            border: 1px solid var(--border-color);
+            color: white;
+            border-radius: 4px;
             font-size: 12px;
-            color: var(--accent-color);
-            margin-top: 5px;
+        }
+        .add-comment-box button {
+            padding: 6px 10px;
+            background: var(--accent-color);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
         }
 
         .modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: var(--modal-bg);
-            z-index: 1000;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
             justify-content: center;
             align-items: center;
-            padding: 20px;
         }
-
-        .modal.active {
-            display: flex;
-        }
-
         .modal-content {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            max-width: 800px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            position: relative;
-            border: 1px solid var(--border-color);
-            padding: 30px;
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            font-size: 28px;
-            color: var(--text-secondary);
-            cursor: pointer;
-        }
-
-        .close-btn:hover {
-            color: var(--text-primary);
-        }
-
-        .modal-body {
-            display: flex;
-            gap: 30px;
-            flex-wrap: wrap;
-        }
-
-        .modal-cover {
-            width: 220px;
-            height: 320px;
-            object-fit: cover;
+            background: var(--card-bg);
+            padding: 25px;
             border-radius: 8px;
-            background-color: #2b2b2b;
-        }
-
-        .modal-details {
-            flex: 1;
-            min-width: 280px;
-        }
-
-        .modal-title {
-            font-size: 24px;
-            color: var(--accent-color);
-            margin-bottom: 5px;
-        }
-
-        .modal-author {
-            font-size: 16px;
-            color: var(--text-secondary);
-            margin-bottom: 15px;
-        }
-
-        .section-title {
-            font-size: 16px;
-            font-weight: bold;
-            color: var(--accent-color);
-            margin-top: 15px;
-            margin-bottom: 5px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 5px;
-        }
-
-        .section-text {
-            font-size: 14px;
-            line-height: 1.6;
-            color: #d0d0d0;
-        }
-
-        .input-field, .comment-input {
             width: 100%;
-            background-color: var(--bg-color);
+            max-width: 400px;
             border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            padding: 10px;
-            border-radius: 6px;
-            margin-top: 8px;
-            margin-bottom: 15px;
         }
-
-        .comment-input {
-            height: 80px;
-            resize: none;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            font-size: 14px;
-            color: var(--text-secondary);
-            display: block;
-        }
-
-        .submit-btn {
-            background-color: var(--accent-color);
-            color: #000;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .pending-item {
-            background: var(--bg-color);
+        .modal-content h3 { margin-bottom: 15px; color: var(--accent-color); }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 12px; margin-bottom: 4px; color: #aaa; }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            background: #121212;
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .pending-info h4 {
-            color: var(--accent-color);
-            margin-bottom: 4px;
-        }
-
-        .pending-info p {
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        .pending-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .approve-btn {
-            background-color: var(--success-color);
             color: white;
-            border: none;
-            padding: 8px 12px;
             border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
         }
-
-        .reject-btn {
-            background-color: var(--danger-color);
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        body.is-admin .add-book-btn, 
-        body.is-admin .pending-requests-btn { display: inline-block; }
-        body.is-admin .suggest-book-btn { display: none; }
-        body.is-admin .book-card-actions { display: flex; }
-        body.is-admin .admin-login-btn { display: none; }
-        body.is-admin .admin-badge { display: inline-flex; }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo">Kitap Dünyası</div>
-        <div class="header-actions">
-            <button class="btn suggest-book-btn" onclick="openAddModal(true)">💡 Kitap Öner</button>
-
-            <button class="btn pending-requests-btn" onclick="openPendingModal()">
-                📬 Öneriler <span class="badge-count" id="pendingCount">0</span>
-            </button>
-            <button class="btn add-book-btn" onclick="openAddModal(false)">+ Kitap Ekle</button>
-
-            <div class="admin-badge" id="adminBadge">
-                <span>🛡️ Yönetici Modu</span>
-                <button class="logout-btn" onclick="logoutAdmin()" title="Çıkış Yap">(Çıkış)</button>
-            </div>
-            <button class="btn admin-login-btn" onclick="loginAdmin()">🔑 Yönetici Girişi</button>
-        </div>
+        <div class="logo">📚 Kitap Dünyası</div>
+        <button class="btn" onclick="openModal()">+ Yeni Kitap Ekle</button>
     </header>
 
-    <div class="search-container">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="searchInput" class="search-input" placeholder="Kitap veya yazar adı ile arayın..." oninput="handleSearch()">
+    <div class="container">
+        <div class="book-grid" id="bookGrid">Yükleniyor...</div>
     </div>
 
-    <div class="no-results" id="noResults">
-        Aradığınız kriterlere uygun kitap bulunamadı.
-    </div>
-
-    <main class="book-grid" id="bookGrid"></main>
-
-    <div class="modal" id="bookModal">
+    <!-- KITAP EKLEME MODALI -->
+    <div class="modal" id="addModal">
         <div class="modal-content">
-            <span class="close-btn" onclick="closeModal('bookModal')">&times;</span>
-            <div class="modal-body">
-                <img class="modal-cover" id="modalImg" src="" alt="Kitap Kapağı">
-                <div class="modal-details">
-                    <h2 class="modal-title" id="modalTitle"></h2>
-                    <div class="modal-author" id="modalAuthor"></div>
-                    
-                    <div class="section-title">İlk Basım Tarihi</div>
-                    <div class="section-text" id="modalDate"></div>
-
-                    <div class="section-title">Kitabın Özeti</div>
-                    <div class="section-text" id="modalSummary"></div>
-
-                    <div class="section-title">Yazar Hakkında</div>
-                    <div class="section-text" id="modalAuthorBio"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="addBookModal">
-        <div class="modal-content" style="max-width: 500px;">
-            <span class="close-btn" onclick="closeModal('addBookModal')">&times;</span>
-            <h2 id="formHeader" style="color: var(--accent-color); margin-bottom: 20px;">Yeni Kitap Ekle</h2>
-            
-            <form id="addBookForm" onsubmit="handleBookSubmit(event)">
-                <input type="hidden" id="editId" value="">
-                <input type="hidden" id="isSuggestion" value="false">
+            <h3>Yeni Kitap Ekle</h3>
+            <form onsubmit="handleBookSubmit(event)">
                 <div class="form-group">
                     <label>Kitap Adı *</label>
-                    <input type="text" id="inputTitle" class="input-field" required placeholder="Kitap adını girin">
+                    <input type="text" id="inputTitle" required>
                 </div>
                 <div class="form-group">
                     <label>Yazar Adı *</label>
-                    <input type="text" id="inputAuthor" class="input-field" required placeholder="Yazarın adını girin">
+                    <input type="text" id="inputAuthor" required>
                 </div>
                 <div class="form-group">
-                    <label>İlk Basım Tarihi</label>
-                    <input type="text" id="inputDate" class="input-field" placeholder="Örn: 1968">
+                    <label>Kategori</label>
+                    <input type="text" id="inputCategory" placeholder="Örn: Roman">
                 </div>
                 <div class="form-group">
-                    <label>Kapak Görsel Bağlantısı (URL)</label>
-                    <input type="url" id="inputCover" class="input-field" placeholder="https://... (.jpg veya .png)">
+                    <label>Fiyat (TL)</label>
+                    <input type="number" id="inputPrice" placeholder="100">
                 </div>
                 <div class="form-group">
-                    <label>Kitabın Kısa Özeti *</label>
-                    <textarea id="inputSummary" class="comment-input" required placeholder="Özeti buraya yazın"></textarea>
+                    <label>Görsel URL</label>
+                    <input type="url" id="inputCover" placeholder="https://...">
                 </div>
-                <div class="form-group">
-                    <label>Yazar Hakkında Bilgi</label>
-                    <textarea id="inputAuthorBio" class="comment-input" placeholder="Yazar bilgilerini yazın"></textarea>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button type="submit" class="btn" style="flex: 1;">Kaydet</button>
+                    <button type="button" class="btn" style="background: #555; color: white;" onclick="closeModal()">İptal</button>
                 </div>
-                <button type="submit" id="submitBtn" class="submit-btn" style="width: 100%;">Kaydet</button>
             </form>
         </div>
     </div>
 
-    <div class="modal" id="pendingModal">
-        <div class="modal-content" style="max-width: 600px;">
-            <span class="close-btn" onclick="closeModal('pendingModal')">&times;</span>
-            <h2 style="color: var(--accent-color); margin-bottom: 20px;">📬 Onay Bekleyen Öneriler</h2>
-            <div id="pendingList"></div>
-        </div>
-    </div>
-
     <script>
-        // Supabase Bağlantı Bilgileri
+        // SUPABASE BAGLANTISI
         const SUPABASE_URL = "https://ljeznmysacjjutfefiyw.supabase.co";
         const SUPABASE_KEY = "sb_publishable_3D081FZUi7fncHB2B3pACg_hAVWs68c";
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const ADMIN_PASSWORD = "1234";
-        let books = [];
-        let pendingBooks = [];
-
+        // KITAPLARI CEK
         async function fetchBooks() {
-            // Sadece onaylanmış kitapları çek
-            const { data, error } = await supabase
-                .from('books')
+            const grid = document.getElementById('bookGrid');
+            const { data, error } = await _supabase
+                .from('kitaplar')
                 .select('*')
-                .eq('is_approved', true)
                 .order('id', { ascending: false });
 
-            if (!error && data) {
-                books = data;
-                renderBooks();
+            if (error) {
+                grid.innerHTML = 'Kitaplar yüklenirken hata oluştu.';
+                console.error(error);
+                return;
             }
-            fetchPendingCount();
-        }
 
-        async function fetchPendingCount() {
-            const { data, error } = await supabase
-                .from('books')
-                .select('*')
-                .eq('is_approved', false);
-
-            if (!error && data) {
-                pendingBooks = data;
-                document.getElementById('pendingCount').innerText = pendingBooks.length;
+            if (!data || data.length === 0) {
+                grid.innerHTML = 'Henüz kitap eklenmemiş.';
+                return;
             }
-        }
 
-        function loginAdmin() {
-            const password = prompt("Lütfen Yönetici Şifresini Giriniz:");
-            if (password === ADMIN_PASSWORD) {
-                document.body.classList.add('is-admin');
-                alert("Yönetici girişi başarılı!");
-            } else if (password !== null) {
-                alert("Hatalı şifre!");
-            }
-        }
-
-        function logoutAdmin() {
-            document.body.classList.remove('is-admin');
-            alert("Yönetici oturumu kapatıldı.");
-        }
-
-        function handleSearch() {
-            const query = document.getElementById('searchInput').value.toLowerCase().trim();
-            const filteredBooks = books.filter(book => 
-                book.title.toLowerCase().includes(query) || 
-                book.author.toLowerCase().includes(query)
-            );
-            renderBooks(filteredBooks);
-        }
-
-        function renderBooks(filteredList = books) {
-            const grid = document.getElementById('bookGrid');
-            const noResults = document.getElementById('noResults');
             grid.innerHTML = '';
-            
-            if (filteredList.length === 0) {
-                noResults.style.display = 'block';
-            } else {
-                noResults.style.display = 'none';
-            }
+            data.forEach(book => {
+                const defaultImg = 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=400';
+                const cover = book.gorsel || defaultImg;
+                const comments = book.yorumlar || [];
 
-            filteredList.forEach((book) => {
-                const defaultImage = 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=400';
-                const coverUrl = book.cover && book.cover.trim() !== '' ? book.cover : defaultImage;
+                let commentsHtml = comments.map(c => `<div class="comment-item">💬 ${c}</div>`).join('');
 
                 grid.innerHTML += `
                     <div class="book-card">
-                        <div class="book-card-actions">
-                            <button class="action-btn edit-btn" onclick="editBook(${book.id})" title="Düzenle">✎ Düzenle</button>
-                            <button class="action-btn delete-btn" onclick="deleteBook(${book.id}, '${book.title}')" title="Sil">✕ Sil</button>
-                        </div>
-                        <img class="book-cover" src="${coverUrl}" alt="${book.title}" onerror="this.src='${defaultImage}'" onclick="openBookModal(${book.id})">
-                        <div class="book-info" onclick="openBookModal(${book.id})">
-                            <div class="book-title">${book.title}</div>
-                            <div class="book-author">${book.author}</div>
-                            <div class="book-date">Basım: ${book.date || 'Bilinmiyor'}</div>
+                        <img class="book-cover" src="${cover}" alt="${book.baslik}" onerror="this.src='${defaultImg}'">
+                        <div class="book-title">${book.baslik}</div>
+                        <div class="book-author">${book.yazar}</div>
+                        <div class="book-price">${book.fiyat ? book.fiyat + ' TL' : ''}</div>
+                        
+                        <div class="comments-section">
+                            <strong style="font-size: 11px; color: #aaa;">Yorumlar (${comments.length})</strong>
+                            <div style="margin-top: 5px;">${commentsHtml}</div>
+                            <div class="add-comment-box">
+                                <input type="text" id="comment-input-${book.id}" placeholder="Yorum yaz...">
+                                <button onclick="addComment(${book.id})">Gönder</button>
+                            </div>
                         </div>
                     </div>
                 `;
             });
         }
 
-        async function deleteBook(id, title) {
-            if (confirm(`"${title}" kitabını silmek istediğinizden emin misiniz?`)) {
-                await supabase.from('books').delete().eq('id', id);
-                fetchBooks();
-            }
-        }
-
-        function editBook(id) {
-            const book = books.find(b => b.id === id);
-            if (!book) return;
-
-            document.getElementById('editId').value = book.id;
-            document.getElementById('isSuggestion').value = "false";
-            document.getElementById('inputTitle').value = book.title;
-            document.getElementById('inputAuthor').value = book.author;
-            document.getElementById('inputDate').value = book.date || '';
-            document.getElementById('inputCover').value = book.cover || '';
-            document.getElementById('inputSummary').value = book.summary;
-            document.getElementById('inputAuthorBio').value = book.authorBio || '';
-
-            document.getElementById('formHeader').innerText = "Kitabı Düzenle";
-            document.getElementById('submitBtn').innerText = "Değişiklikleri Kaydet";
-            openAddModal(false);
-        }
-
-        function openBookModal(id) {
-            const book = books.find(b => b.id === id);
-            if (!book) return;
-            const defaultImage = 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=400';
-            
-            document.getElementById('modalImg').src = book.cover && book.cover.trim() !== '' ? book.cover : defaultImage;
-            document.getElementById('modalTitle').innerText = book.title;
-            document.getElementById('modalAuthor').innerText = book.author;
-            document.getElementById('modalDate').innerText = book.date || 'Belirtilmedi';
-            document.getElementById('modalSummary').innerText = book.summary;
-            document.getElementById('modalAuthorBio').innerText = book.authorBio || 'Bilgi bulunmuyor.';
-
-            document.getElementById('bookModal').classList.add('active');
-        }
-
-        function openAddModal(isSuggestion = false) {
-            document.getElementById('isSuggestion').value = isSuggestion ? "true" : "false";
-            
-            if (isSuggestion) {
-                document.getElementById('formHeader').innerText = "💡 Kitap Önerisinde Bulun";
-                document.getElementById('submitBtn').innerText = "Öneriyi Gönder";
-            } else if (!document.getElementById('editId').value) {
-                document.getElementById('formHeader').innerText = "Yeni Kitap Ekle";
-                document.getElementById('submitBtn').innerText = "Yayınla";
-            }
-
-            document.getElementById('addBookModal').classList.add('active');
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-            if (modalId === 'addBookModal') {
-                document.getElementById('addBookForm').reset();
-                document.getElementById('editId').value = "";
-                document.getElementById('isSuggestion').value = "false";
-            }
-        }
-
-        async function handleBookSubmit(event) {
-            event.preventDefault();
-
-            const editId = document.getElementById('editId').value;
-            const isSuggestion = document.getElementById('isSuggestion').value === "true";
-
-            const bookData = {
-                title: document.getElementById('inputTitle').value,
-                author: document.getElementById('inputAuthor').value,
-                date: document.getElementById('inputDate').value,
-                cover: document.getElementById('inputCover').value,
-                summary: document.getElementById('inputSummary').value,
-                authorBio: document.getElementById('inputAuthorBio').value,
-                is_approved: isSuggestion ? false : true
+        // YENI KITAP EKLE
+        async function handleBookSubmit(e) {
+            e.preventDefault();
+            const newBook = {
+                baslik: document.getElementById('inputTitle').value,
+                yazar: document.getElementById('inputAuthor').value,
+                kategori: document.getElementById('inputCategory').value,
+                fiyat: document.getElementById('inputPrice').value ? parseFloat(document.getElementById('inputPrice').value) : null,
+                gorsel: document.getElementById('inputCover').value,
+                yorumlar: []
             };
 
-            if (editId) {
-                // Güncelleme
-                await supabase.from('books').update(bookData).eq('id', editId);
-                alert("Kitap güncellendi!");
+            const { error } = await _supabase.from('kitaplar').insert([newBook]);
+            if (error) {
+                alert('Ekleme hatası: ' + error.message);
             } else {
-                // Yeni Kayıt
-                await supabase.from('books').insert([bookData]);
-                if (isSuggestion) {
-                    alert("Öneriniz yöneticilere iletildi! Teşekkür ederiz.");
-                } else {
-                    alert("Kitap başarıyla eklendi!");
-                }
-            }
-
-            closeModal('addBookModal');
-            fetchBooks();
-        }
-
-        async function openPendingModal() {
-            await fetchPendingCount();
-            const list = document.getElementById('pendingList');
-            list.innerHTML = '';
-
-            if (pendingBooks.length === 0) {
-                list.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">Onay bekleyen kitap önerisi bulunmuyor.</p>';
-            } else {
-                pendingBooks.forEach((item) => {
-                    list.innerHTML += `
-                        <div class="pending-item">
-                            <div class="pending-info">
-                                <h4>${item.title}</h4>
-                                <p><strong>Yazar:</strong> ${item.author} (${item.date || 'Tarih yok'})</p>
-                                <p style="margin-top:5px;">${item.summary.substring(0, 90)}...</p>
-                            </div>
-                            <div class="pending-actions">
-                                <button class="approve-btn" onclick="approveSuggestion(${item.id})">✓ Onayla</button>
-                                <button class="reject-btn" onclick="rejectSuggestion(${item.id})">✕ Reddet</button>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-
-            document.getElementById('pendingModal').classList.add('active');
-        }
-
-        async function approveSuggestion(id) {
-            await supabase.from('books').update({ is_approved: true }).eq('id', id);
-            alert("Kitap onaylandı ve kütüphaneye eklendi!");
-            openPendingModal();
-            fetchBooks();
-        }
-
-        async function rejectSuggestion(id) {
-            if (confirm("Bu öneriyi reddetmek istediğinizden emin misiniz?")) {
-                await supabase.from('books').delete().eq('id', id);
-                openPendingModal();
+                closeModal();
                 fetchBooks();
             }
         }
 
-        // Uygulama Başladığında Kitapları Çek
+        // YORUM EKLE
+        async function addComment(bookId) {
+            const input = document.getElementById(`comment-input-${bookId}`);
+            const commentText = input.value.trim();
+            if (!commentText) return;
+
+            // Önce mevcut kitabı ve yorumları alalım
+            const { data } = await _supabase.from('kitaplar').select('yorumlar').eq('id', bookId).single();
+            const currentComments = data.yorumlar || [];
+            currentComments.push(commentText);
+
+            // Güncelleme yapalım
+            const { error } = await _supabase.from('kitaplar').update({ yorumlar: currentComments }).eq('id', bookId);
+            
+            if (error) {
+                alert('Yorum eklenemedi: ' + error.message);
+            } else {
+                input.value = '';
+                fetchBooks();
+            }
+        }
+
+        function openModal() { document.getElementById('addModal').style.display = 'flex'; }
+        function closeModal() { 
+            document.getElementById('addModal').style.display = 'none'; 
+            document.getElementById('inputTitle').value = '';
+            document.getElementById('inputAuthor').value = '';
+        }
+
+        // Sayfa açılınca kitapları getir
         fetchBooks();
     </script>
 </body>
